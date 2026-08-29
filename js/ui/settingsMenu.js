@@ -166,7 +166,9 @@ function bindSettingsMenu() {
   const slider = document.getElementById('volume-slider');
   if (slider) {
     slider.addEventListener('input', function () {
-      if (G.Storage) G.Storage.setSoundVolume(parseFloat(slider.value));
+      const vol = parseFloat(slider.value);
+      if (G.Storage) G.Storage.setSoundVolume(vol);
+      if (G.Audio && typeof G.Audio.setVolume === 'function') G.Audio.setVolume(vol);
     });
   }
 

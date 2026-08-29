@@ -59,15 +59,81 @@ function isGrounded(entityAabb, gVec, stageGrid, width, height, blocks, excludeB
          aabbOverlapsAnyBlock(probe, blocks, excludeBlock);
 }
 
+function overlapsWorld(entity, stageGrid, width, height, blocks, excludeBlock) {
+  const aabb = entity.getAABB();
+  return aabbOverlapsSolidTiles(aabb, stageGrid, width, height) ||
+         aabbOverlapsAnyBlock(aabb, blocks, excludeBlock);
+}
+
+function heldBlockFits(player, stageGrid, width, height, blocks) {
+  if (!player.holdingBlock) return true;
+  const TILE_SIZE = G.Grid.TILE_SIZE;
+  const fVec = facingVecFor(player);
+  const aabb = {
+    x: player.px + fVec.x * TILE_SIZE - TILE_SIZE / 2,
+    y: player.py + fVec.y * TILE_SIZE - TILE_SIZE / 2,
+    w: TILE_SIZE,
+    h: TILE_SIZE
+  };
+  return !aabbOverlapsSolidTiles(aabb, stageGrid, width, height) &&
+         !aabbOverlapsAnyBlock(aabb, blocks, player.holdingBlock);
+}
+
+function trySetCrouching(player, crouching, gVec, stageGrid, width, height, blocks, heldBlock) {
+  if (player.crouching === crouching) return true;
+
+  const oldPx = player.px;
+  const oldPy = player.py;
+  const oldAabb = player.getAABB();
+  player.crouching = crouching;
+  const newAabb = player.getAABB();
+  const oldSize = Math.abs(gVec.x) * oldAabb.w + Math.abs(gVec.y) * oldAabb.h;
+  const newSize = Math.abs(gVec.x) * newAabb.w + Math.abs(gVec.y) * newAabb.h;
+  const shift = (oldSize - newSize) / 2;
+  player.px += gVec.x * shift;
+  player.py += gVec.y * shift;
+
+  if (overlapsWorld(player, stageGrid, width, height, blocks, heldBlock) ||
+      !heldBlockFits(player, stageGrid, width, height, blocks)) {
+    player.px = oldPx;
+    player.py = oldPy;
+    player.crouching = !crouching;
+    return false;
+  }
+  return true;
+}
+
+function tryRotatePlayer(player, nextGravityIndex, stageGrid, width, height, blocks, heldBlock) {
+  const oldGravityIndex = player.gravityIndex;
+  player.gravityIndex = nextGravityIndex;
+  if (overlapsWorld(player, stageGrid, width, height, blocks, heldBlock) ||
+      !heldBlockFits(player, stageGrid, width, height, blocks)) {
+    player.gravityIndex = oldGravityIndex;
+    return false;
+  }
+  return true;
+}
+
 // Resolves movement for one axis ('x' or 'y') on an entity that exposes
 // px/py, vx/vy and getAABB(). Mutates the entity's position and, on
 // collision, zeroes the velocity component along this axis.
-function resolveAxis(entity, axis, delta, stageGrid, width, height, blocks, excludeBlock) {
-  if (delta === 0) return;
+function resolveAxisStep(entity, axis, delta, stageGrid, width, height, blocks, excludeBlock) {
+  if (delta === 0) return false;
   const TILE_SIZE = G.Grid.TILE_SIZE;
 
   if (axis === 'x') entity.px += delta;
   else entity.py += delta;
+
+  if (entity.holdingBlock && !heldBlockFits(entity, stageGrid, width, height, blocks)) {
+    if (axis === 'x') {
+      entity.px -= delta;
+      entity.vx = 0;
+    } else {
+      entity.py -= delta;
+      entity.vy = 0;
+    }
+    return true;
+  }
 
   const aabb = entity.getAABB();
   let correction = null; // corrected aabb.x or aabb.y
@@ -105,6 +171,7 @@ function resolveAxis(entity, axis, delta, stageGrid, width, height, blocks, excl
     if (correction !== null) {
       entity.px = correction + aabb.w / 2;
       entity.vx = 0;
+      return true;
     }
   } else {
     const colMin = Math.floor(aabb.x / TILE_SIZE);
@@ -138,7 +205,19 @@ function resolveAxis(entity, axis, delta, stageGrid, width, height, blocks, excl
     if (correction !== null) {
       entity.py = correction + aabb.h / 2;
       entity.vy = 0;
+      return true;
     }
+  }
+  return false;
+}
+
+function resolveAxis(entity, axis, delta, stageGrid, width, height, blocks, excludeBlock) {
+  if (delta === 0) return;
+  const maxStep = G.Grid.TILE_SIZE / 2;
+  const stepCount = Math.ceil(Math.abs(delta) / maxStep);
+  const step = delta / stepCount;
+  for (let i = 0; i < stepCount; i++) {
+    if (resolveAxisStep(entity, axis, step, stageGrid, width, height, blocks, excludeBlock)) return;
   }
 }
 
@@ -168,18 +247,33 @@ function tryGrab(player, blocks) {
   return null;
 }
 
-function dropBlock(player, block) {
+// Attempts to place `block` on the tile the player is facing. Returns false
+// (leaving the block untouched, still held) if that tile is solid or already
+// occupied by another block — otherwise the block would end up embedded in
+// it.
+function dropBlock(player, block, stageGrid, width, height, blocks) {
   const TILE_SIZE = G.Grid.TILE_SIZE;
   const originCol = Math.floor(player.px / TILE_SIZE);
   const originRow = Math.floor(player.py / TILE_SIZE);
   const fVec = facingVecFor(player);
   const targetCol = originCol + fVec.x;
   const targetRow = originRow + fVec.y;
+
+  if (G.Grid.isSolidAt(stageGrid, width, height, targetCol, targetRow)) return false;
+  const targetAabb = {
+    x: targetCol * TILE_SIZE,
+    y: targetRow * TILE_SIZE,
+    w: TILE_SIZE,
+    h: TILE_SIZE
+  };
+  if (aabbOverlapsAnyBlock(targetAabb, blocks, block)) return false;
+
   block.px = (targetCol + 0.5) * TILE_SIZE;
   block.py = (targetRow + 0.5) * TILE_SIZE;
   block.heldBy = null;
   block.vx = 0;
   block.vy = 0;
+  return true;
 }
 
 function update(dt, world) {
@@ -196,27 +290,39 @@ function update(dt, world) {
   const Gravity = G.Gravity;
   const TILE_SIZE = G.Grid.TILE_SIZE;
 
-  // 1. crouch toggle (held state, not one-shot)
-  player.crouching = Input.isDown('crouch');
+  const heldBlock = player.holdingBlock;
+  let gVec = Gravity.getGravityVec(player.gravityIndex);
+
+  // 1. Resize from the gravity-side edge so crouching never sinks into the
+  //    floor, and only stand when the expanded hitbox has room.
+  trySetCrouching(
+    player, Input.isDown('crouch'), gVec, stageGrid, width, height, blocks, heldBlock
+  );
 
   // 2. grounded check (based on position/orientation carried over from the
   //    end of the previous frame)
-  const gVec = Gravity.getGravityVec(player.gravityIndex);
-  const heldBlock = player.holdingBlock;
   player.grounded = isGrounded(
     player.getAABB(), gVec, stageGrid, width, height, blocks, heldBlock
   );
 
-  // 3. rotate gravity (Z) — grounded only, one-shot
+  // 3. Rotate only when the new hitbox fits, then use the new gravity for
+  //    every remaining calculation in this frame.
   if (Input.consumePressed('rotate') && player.grounded) {
-    player.gravityIndex = Gravity.rotateIndex(player.gravityIndex);
+    const nextGravityIndex = Gravity.rotateIndex(player.gravityIndex);
+    if (tryRotatePlayer(player, nextGravityIndex, stageGrid, width, height, blocks, heldBlock)) {
+      gVec = Gravity.getGravityVec(player.gravityIndex);
+      player.grounded = isGrounded(
+        player.getAABB(), gVec, stageGrid, width, height, blocks, heldBlock
+      );
+    }
   }
 
   // 4. grab / drop (SHIFT) — one-shot
   if (Input.consumePressed('grab')) {
     if (player.holdingBlock) {
-      dropBlock(player, player.holdingBlock);
-      player.holdingBlock = null;
+      if (dropBlock(player, player.holdingBlock, stageGrid, width, height, blocks)) {
+        player.holdingBlock = null;
+      }
     } else {
       const found = tryGrab(player, blocks);
       if (found) {
@@ -240,10 +346,14 @@ function update(dt, world) {
   let moveDir = null;
   if (movingRight && !movingLeft) {
     moveDir = rVec;
+    const oldFacing = player.facing;
     player.facing = 1;
+    if (!heldBlockFits(player, stageGrid, width, height, blocks)) player.facing = oldFacing;
   } else if (movingLeft && !movingRight) {
     moveDir = lVec;
+    const oldFacing = player.facing;
     player.facing = -1;
+    if (!heldBlockFits(player, stageGrid, width, height, blocks)) player.facing = oldFacing;
   }
 
   // Movement axis is orthogonal to the gravity axis; rVec/lVec only ever
@@ -301,6 +411,7 @@ function update(dt, world) {
     if (c.collected) continue;
     if (aabbIntersects(playerAabb, c.getAABB())) {
       c.collected = true;
+      if (G.Audio && typeof G.Audio.playCoin === 'function') G.Audio.playCoin();
     }
   }
 

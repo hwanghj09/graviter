@@ -31,12 +31,14 @@ function advance(stageId) {
     G.Main.init(next);
     G.State.goTo(G.State.SCREENS.PLAYING);
   } else {
+    if (G.Audio && typeof G.Audio.playEnding === 'function') G.Audio.playEnding();
     G.State.goTo(G.State.SCREENS.ENDING);
   }
 }
 
 function onStageClear(stageId) {
   if (G.Storage) G.Storage.addClearedStage(stageId);
+  if (G.Audio && typeof G.Audio.playStageClear === 'function') G.Audio.playStageClear();
   G.State.goTo(G.State.SCREENS.STAGE_CLEAR);
 
   if (_timer !== null && typeof globalThis.clearTimeout === 'function') {

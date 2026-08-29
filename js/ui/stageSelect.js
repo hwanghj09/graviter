@@ -31,8 +31,18 @@ function render() {
     const btn = document.createElement('button');
     btn.type = 'button';
     btn.className = 'stage-tile ' + (isCleared ? 'stage-cleared' : (unlocked ? 'stage-unlocked' : 'stage-locked'));
-    btn.textContent = String(stage.id);
-    btn.title = stage.name || ('스테이지 ' + stage.id);
+    const status = document.createElement('span');
+    status.className = 'stage-status';
+    status.textContent = isCleared ? 'CLEAR' : (unlocked ? 'AVAILABLE' : 'LOCKED');
+    const number = document.createElement('span');
+    number.className = 'stage-number';
+    number.textContent = String(stage.id).padStart(2, '0');
+    const name = document.createElement('span');
+    name.className = 'stage-name';
+    name.textContent = stage.name || ('스테이지 ' + stage.id);
+    btn.append(status, number, name);
+    btn.title = name.textContent;
+    btn.setAttribute('aria-label', name.textContent + ', ' + status.textContent);
     btn.disabled = !unlocked;
 
     if (unlocked) {
