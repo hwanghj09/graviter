@@ -1,0 +1,223 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+}
+
+body {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  background: #202225;
+  font-family: 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif;
+  overflow: hidden;
+}
+
+#game-root {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100vw;
+  height: 100vh;
+  background: #202225;
+}
+
+#game-canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: #202225;
+}
+
+/* Room left for later UI overlays (menus, HUD, pause screen, etc.)
+   inserted at the UI_SCREENS markers in index.html. Overlays should be
+   absolutely positioned within #game-root so they sit on top of the
+   canvas without affecting layout. */
+#game-root .ui-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+/* ============ Menu / state screens (js/state/gameState.js) ============ */
+/* Each screen (main menu, stage select, settings, pause, stage clear,
+   ending) is a fixed full-viewport layer inserted at the UI_SCREENS
+   markers, as a sibling of #game-root rather than a child of it — so
+   these rules use their own class names ("screen"/"screen-overlay")
+   instead of .ui-overlay above. G.State toggles the "visible" class. */
+
+.screen {
+  position: fixed;
+  inset: 0;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  color: #f0f0f0;
+}
+
+.screen.visible {
+  display: flex;
+}
+
+.screen:not(.screen-overlay) {
+  background: #16171a;
+}
+
+/* Pause / stage-clear sit on top of the still-visible frozen canvas. */
+.screen-overlay {
+  background: rgba(10, 10, 12, 0.72);
+}
+
+.screen-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 12px;
+  min-width: 280px;
+  max-width: 90vw;
+  padding: 32px 36px;
+  background: #26282c;
+  border: 1px solid #3a3d42;
+  border-radius: 10px;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.45);
+}
+
+.screen-panel h1 {
+  margin-bottom: 8px;
+  font-size: 2rem;
+  text-align: center;
+  letter-spacing: 0.05em;
+}
+
+.screen-panel h2 {
+  margin-bottom: 8px;
+  font-size: 1.4rem;
+  text-align: center;
+}
+
+.screen-panel h3 {
+  margin: 8px 0 4px;
+  font-size: 0.9rem;
+  color: #9aa0a8;
+}
+
+.screen-panel p {
+  text-align: center;
+  color: #c8ccd0;
+}
+
+.screen-panel button {
+  padding: 10px 16px;
+  font-size: 1rem;
+  color: #f0f0f0;
+  background: #3a3d42;
+  border: 1px solid #4a4d52;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.screen-panel button:hover:not(:disabled) {
+  background: #4a4d52;
+}
+
+.screen-panel button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+/* Stage select uses the shared screen and panel treatment; numbered square
+   tiles (locked / unlocked-uncleared / cleared must still read distinctly). */
+.stage-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 92px);
+  grid-auto-rows: 92px;
+  gap: 18px;
+  justify-content: center;
+  margin: 22px 0 12px;
+}
+
+.stage-tile {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.3rem;
+  font-weight: bold;
+  border-radius: 6px;
+  border: 2px solid #33363b;
+  padding: 0;
+}
+
+.stage-tile.stage-locked {
+  background: #8b8e92;
+  border-color: #33363b;
+  color: #c7cace;
+}
+
+.stage-tile.stage-unlocked {
+  background: #6f7276;
+  border-color: #2b2d30;
+  color: #ffffff;
+}
+
+.stage-tile.stage-cleared {
+  background: #dfe1e3;
+  border-color: #33363b;
+  color: #1a1a1a;
+}
+
+.stage-tile.stage-cleared::after {
+  content: ' \2713';
+  font-size: 0.9rem;
+}
+
+.stage-select-actions {
+  display: flex;
+  justify-content: center;
+  gap: 14px;
+}
+
+/* Settings */
+.keybind-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.keybind-btn {
+  min-width: 120px;
+}
+
+.keybind-btn.conflict {
+  background: #4a1f1f;
+  border-color: #d9534f;
+  color: #ff8a8a;
+}
+
+.keybind-btn.conflict:hover:not(:disabled) {
+  background: #5a2626;
+}
+
+.keybind-warning {
+  color: #ff6b6b;
+  font-size: 0.85rem;
+  text-align: center;
+}
+
+.keybind-warning[hidden] {
+  display: none;
+}
+
+#volume-slider {
+  width: 100%;
+}

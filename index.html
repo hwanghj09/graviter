@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Graviter</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div id="game-root">
+<canvas id="game-canvas" width="960" height="600"></canvas>
+</div>
+
+<!-- UI_SCREENS_START -->
+<div id="main-menu" class="screen">
+  <div class="screen-panel">
+    <h1>Graviter</h1>
+    <button id="btn-start" type="button">시작하기</button>
+    <button id="btn-settings" type="button">설정</button>
+  </div>
+</div>
+
+<div id="stage-select" class="screen stage-select-screen">
+  <div class="screen-panel stage-select-panel">
+    <h2>스테이지 선택</h2>
+    <div id="stage-grid" class="stage-grid"></div>
+    <div class="stage-select-actions">
+      <button id="stage-select-back" type="button">뒤로</button>
+    </div>
+  </div>
+</div>
+
+<div id="settings" class="screen">
+  <div class="screen-panel">
+    <h2>설정</h2>
+    <div class="settings-section">
+      <h3>조작키</h3>
+      <div class="keybind-row"><span>왼쪽</span><button id="keybind-left" class="keybind-btn" type="button" data-action="left" aria-label="왼쪽 이동 키 변경"></button></div>
+      <div class="keybind-row"><span>오른쪽</span><button id="keybind-right" class="keybind-btn" type="button" data-action="right" aria-label="오른쪽 이동 키 변경"></button></div>
+      <div class="keybind-row"><span>점프</span><button id="keybind-jump" class="keybind-btn" type="button" data-action="jump" aria-label="점프 키 변경"></button></div>
+      <div class="keybind-row"><span>웅크리기</span><button id="keybind-crouch" class="keybind-btn" type="button" data-action="crouch" aria-label="웅크리기 키 변경"></button></div>
+      <div id="keybind-warning" class="keybind-warning" role="alert" hidden></div>
+    </div>
+    <div class="settings-section">
+      <h3>사운드</h3>
+      <input type="range" id="volume-slider" min="0" max="1" step="0.01" aria-label="사운드 볼륨">
+    </div>
+    <button id="settings-back" type="button">뒤로</button>
+  </div>
+</div>
+
+<div id="pause-menu" class="screen screen-overlay">
+  <div class="screen-panel">
+    <h2>일시정지</h2>
+    <button id="pause-resume" type="button">계속하기</button>
+    <button id="pause-settings" type="button">설정</button>
+    <button id="pause-exit" type="button">나가기</button>
+  </div>
+</div>
+
+<div id="stage-clear" class="screen screen-overlay">
+  <div class="screen-panel">
+    <h2>스테이지 클리어!</h2>
+  </div>
+</div>
+
+<div id="ending" class="screen">
+  <div class="screen-panel">
+    <h2>축하합니다!</h2>
+    <p>모든 스테이지를 클리어했습니다.</p>
+    <button id="ending-menu" type="button">메인 화면으로</button>
+  </div>
+</div>
+<!-- UI_SCREENS_END -->
+
+<script src="js/engine/gravity.js"></script>
+<script src="js/engine/grid.js"></script>
+<script src="js/state/storage.js"></script>
+<script src="js/input/input.js"></script>
+<script src="js/engine/player.js"></script>
+<script src="js/engine/block.js"></script>
+<script src="js/engine/coin.js"></script>
+<script src="js/engine/physics.js"></script>
+<script src="js/render/camera.js"></script>
+<script src="js/render/renderer.js"></script>
+<script src="js/state/gameState.js"></script>
+
+<!-- STAGE_SCRIPTS_START -->
+<script src="js/stages/stage01.js"></script>
+<script src="js/stages/stage02.js"></script>
+<script src="js/stages/stage03.js"></script>
+<!-- STAGE_SCRIPTS_END -->
+
+<!-- UI_SCRIPTS_START -->
+<script src="js/ui/mainMenu.js"></script>
+<script src="js/ui/stageSelect.js"></script>
+<script src="js/ui/settingsMenu.js"></script>
+<script src="js/ui/pauseMenu.js"></script>
+<script src="js/ui/stageClear.js"></script>
+<script src="js/ui/ending.js"></script>
+<script src="js/ui/bootstrap.js"></script>
+<!-- UI_SCRIPTS_END -->
+
+<script src="js/main.js"></script>
+</body>
+</html>
