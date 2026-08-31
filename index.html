@@ -9,6 +9,10 @@
 <body>
 <div id="game-root">
 <canvas id="game-canvas" width="960" height="600"></canvas>
+<div id="tutorial-hud" class="tutorial-hud" role="status" aria-live="polite" hidden>
+  <span class="tutorial-label">TRAINING</span>
+  <strong id="tutorial-instruction"></strong>
+</div>
 </div>
 
 <!-- UI_SCREENS_START -->
@@ -17,7 +21,17 @@
   <div class="screen-panel main-menu-panel">
     <h1>Graviter</h1>
     <button id="btn-start" type="button">시작하기</button>
+    <button id="btn-tutorial" type="button">튜토리얼</button>
     <button id="btn-settings" type="button">설정</button>
+  </div>
+</div>
+
+<div id="tutorial-prompt" class="screen">
+  <div class="screen-panel">
+    <h2>튜토리얼을 진행하겠습니까?</h2>
+    <p>이동, 점프, 중력 회전과 블럭 사용법을 익힐 수 있습니다.</p>
+    <button id="tutorial-accept" type="button">진행하기</button>
+    <button id="tutorial-decline" type="button">건너뛰기</button>
   </div>
 </div>
 
@@ -85,7 +99,7 @@
 
 <div id="stage-clear" class="screen screen-overlay">
   <div class="screen-panel clear-panel">
-    <h2>스테이지 클리어!</h2>
+    <h2 id="stage-clear-title">스테이지 클리어!</h2>
   </div>
 </div>
 
@@ -131,6 +145,7 @@
 <script src="js/ui/stageSelect.js"></script>
 <script src="js/ui/settingsMenu.js"></script>
 <script src="js/ui/pauseMenu.js"></script>
+<script src="js/ui/tutorial.js"></script>
 <script src="js/ui/stageClear.js"></script>
 <script src="js/ui/ending.js"></script>
 <script src="js/ui/bootstrap.js"></script>

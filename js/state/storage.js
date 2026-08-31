@@ -12,7 +12,8 @@ const KEYS = {
   keybinds: STORAGE_PREFIX + 'keybinds',
   keybindsMigratedToArrowDefaults: STORAGE_PREFIX + 'keybindsMigratedToArrowDefaults',
   soundVolume: STORAGE_PREFIX + 'soundVolume',
-  categoryVolumes: STORAGE_PREFIX + 'categoryVolumes'
+  categoryVolumes: STORAGE_PREFIX + 'categoryVolumes',
+  tutorialComplete: STORAGE_PREFIX + 'tutorialComplete'
 };
 
 const DEFAULT_KEYBINDS = {
@@ -101,6 +102,16 @@ function addClearedStage(stageId) {
   return cleared;
 }
 
+function isTutorialComplete() {
+  return readKey(KEYS.tutorialComplete, false) === true;
+}
+
+function setTutorialComplete(complete) {
+  const value = complete !== false;
+  writeKey(KEYS.tutorialComplete, value);
+  return value;
+}
+
 function migrateKeybindsToArrowDefaults() {
   if (readKey(KEYS.keybindsMigratedToArrowDefaults, false)) return;
   writeKey(KEYS.keybinds, DEFAULT_KEYBINDS);
@@ -168,6 +179,8 @@ G.Storage = {
   getClearedStages: getClearedStages,
   setClearedStages: setClearedStages,
   addClearedStage: addClearedStage,
+  isTutorialComplete: isTutorialComplete,
+  setTutorialComplete: setTutorialComplete,
   getKeybinds: getKeybinds,
   setKeybinds: setKeybinds,
   getSoundVolume: getSoundVolume,

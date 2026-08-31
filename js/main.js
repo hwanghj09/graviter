@@ -95,6 +95,7 @@ function buildWorld(stageData) {
     coins: coins,
     portalPos: portalPos,
     stageId: stageData.id,
+    isTutorial: !!stageData.isTutorial,
     cleared: false
   };
 }
@@ -110,6 +111,7 @@ function loop(now) {
   if (_paused || !_world) return;
 
   const result = G.Physics.update(dt, _world);
+  if (G.Tutorial && typeof G.Tutorial.update === 'function') G.Tutorial.update(_world);
   _camera.update(dt);
   if (_ctx) {
     G.Renderer.draw(_ctx, _world, _camera, dt);

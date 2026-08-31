@@ -23,6 +23,10 @@ function sortedStages() {
 }
 
 function advance(stageId) {
+  if (stageId === 0) {
+    G.State.goTo(G.State.SCREENS.STAGE_SELECT);
+    return;
+  }
   const stages = sortedStages();
   const idx = stages.findIndex(function (s) { return s.id === stageId; });
   const next = (idx !== -1) ? stages[idx + 1] : undefined;
@@ -37,7 +41,16 @@ function advance(stageId) {
 }
 
 function onStageClear(stageId) {
-  if (G.Storage) G.Storage.addClearedStage(stageId);
+  const tutorial = stageId === 0;
+  if (G.Storage) {
+    if (tutorial) G.Storage.setTutorialComplete(true);
+    else G.Storage.addClearedStage(stageId);
+  }
+  if (tutorial && G.Tutorial) G.Tutorial.finish();
+  if (typeof document !== 'undefined') {
+    const title = document.getElementById('stage-clear-title');
+    if (title) title.textContent = tutorial ? '튜토리얼 완료!' : '스테이지 클리어!';
+  }
   if (G.Audio && typeof G.Audio.playStageClear === 'function') G.Audio.playStageClear();
   G.State.goTo(G.State.SCREENS.STAGE_CLEAR);
 

@@ -11,6 +11,7 @@ var G = globalThis.G;
 
 const SCREENS = {
   MAIN_MENU: 'MAIN_MENU',
+  TUTORIAL_PROMPT: 'TUTORIAL_PROMPT',
   STAGE_SELECT: 'STAGE_SELECT',
   SETTINGS: 'SETTINGS',
   SETTINGS_CONTROLS: 'SETTINGS_CONTROLS',
@@ -23,6 +24,7 @@ const SCREENS = {
 
 const SCREEN_ELEMENT_IDS = {
   MAIN_MENU: 'main-menu',
+  TUTORIAL_PROMPT: 'tutorial-prompt',
   STAGE_SELECT: 'stage-select',
   SETTINGS: 'settings',
   SETTINGS_CONTROLS: 'settings-controls',

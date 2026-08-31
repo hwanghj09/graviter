@@ -1,12 +1,18 @@
 const assert = require('node:assert/strict');
 
 const inputState = Object.create(null);
+const storedValues = new Map();
+globalThis.localStorage = {
+  getItem: function (key) { return storedValues.has(key) ? storedValues.get(key) : null; },
+  setItem: function (key, value) { storedValues.set(key, value); }
+};
 globalThis.G = {
   Input: {
     isDown: function (action) { return !!inputState[action]; },
     consumePressed: function () { return false; }
   }
 };
+require('../js/state/storage.js');
 require('../js/stages/puzzleStage.js');
 const stages = Array.from({ length: 10 }, function (_, index) {
   return require('../js/stages/stage' + String(index + 1).padStart(2, '0') + '.js');
@@ -281,3 +287,29 @@ stages.forEach(function (stage, index) {
 assert.equal(puzzleKinds.size, stages.length);
 assert.equal(puzzleTypes.size, stages.length);
 console.log('all gameplay types are distinct and every block gate is solvable');
+
+const tutorial = G.createPuzzleStage({
+  id: 0, name: '중력 장비 훈련', puzzleType: '튜토리얼', type: 'tutorial'
+});
+const tutorialPortal = findPortal(tutorial);
+assert.equal(tutorial.isTutorial, true);
+assert.equal(tutorial.coins.length, 2);
+assert.ok(tutorialPortal);
+assert.ok(flood(tutorial, tutorial.playerStart).has(key(tutorialPortal.x, tutorialPortal.y)));
+assert.equal(crossesGate(tutorial, tutorial.puzzle.gates[0], false), false);
+assert.equal(crossesGate(tutorial, tutorial.puzzle.gates[0], true), true);
+assert.equal(G.Storage.isTutorialComplete(), false);
+require('../js/ui/bootstrap.js');
+assert.equal(G.Bootstrap.shouldStartTutorial(), true);
+let routedTo = null;
+G.State = {
+  SCREENS: { TUTORIAL_PROMPT: 'prompt', MAIN_MENU: 'menu' },
+  goTo: function (screen) { routedTo = screen; }
+};
+G.Bootstrap.run();
+assert.equal(routedTo, 'prompt');
+G.Storage.setTutorialComplete(true);
+assert.equal(G.Bootstrap.shouldStartTutorial(), false);
+G.Bootstrap.run();
+assert.equal(routedTo, 'menu');
+console.log('first visit offers the tutorial once and completion is saved');

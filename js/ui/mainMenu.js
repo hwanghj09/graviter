@@ -13,6 +13,13 @@ function bindMainMenu() {
     });
   }
 
+  const tutorialBtn = document.getElementById('btn-tutorial');
+  if (tutorialBtn) {
+    tutorialBtn.addEventListener('click', function () {
+      if (G.Tutorial) G.Tutorial.launch();
+    });
+  }
+
   const settingsBtn = document.getElementById('btn-settings');
   if (settingsBtn) {
     settingsBtn.addEventListener('click', function () {

@@ -50,6 +50,8 @@ function bindPauseMenu() {
   const exitBtn = document.getElementById('pause-exit');
   if (exitBtn) {
     exitBtn.addEventListener('click', function () {
+      const world = G.Main && G.Main._getWorld ? G.Main._getWorld() : null;
+      if (world && world.isTutorial && G.Tutorial) G.Tutorial.finish();
       G.State.goTo(G.State.SCREENS.MAIN_MENU);
     });
   }

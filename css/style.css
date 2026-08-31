@@ -60,6 +60,42 @@ input {
   background: var(--bg);
 }
 
+.tutorial-hud {
+  position: absolute;
+  left: 50%;
+  bottom: 28px;
+  z-index: 4;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  max-width: min(680px, calc(100vw - 32px));
+  padding: 12px 16px;
+  color: var(--text);
+  background: rgba(8, 11, 16, 0.92);
+  border: 1px solid var(--line-strong);
+  border-radius: 12px;
+  pointer-events: none;
+  transform: translateX(-50%);
+}
+
+.tutorial-hud[hidden] {
+  display: none;
+}
+
+.tutorial-label {
+  flex: none;
+  color: var(--accent);
+  font-family: Consolas, 'SFMono-Regular', monospace;
+  font-size: 0.68rem;
+  font-weight: 900;
+  letter-spacing: 0.14em;
+}
+
+.tutorial-hud strong {
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
 /* Room left for later UI overlays (menus, HUD, pause screen, etc.)
    inserted at the UI_SCREENS markers in index.html. Overlays should be
    absolutely positioned within #game-root so they sit on top of the
@@ -468,6 +504,7 @@ input {
 }
 
 #btn-start,
+#tutorial-accept,
 #pause-resume {
   color: #031016;
   background: var(--accent);
@@ -476,6 +513,7 @@ input {
 }
 
 #btn-start:hover:not(:disabled),
+#tutorial-accept:hover:not(:disabled),
 #pause-resume:hover:not(:disabled) {
   background: #7ae1ff;
 }

@@ -59,6 +59,27 @@ var G = globalThis.G;
     });
   }
 
+  function tutorialStage(config) {
+    const width = 60;
+    const height = 18;
+    const grid = makeGrid(width, height);
+    carve(grid, 1, 1, 45, 16);
+    wall(grid, 10, 15, 12, 16);
+    wall(grid, 28, 7, 31, 16);
+    const gate = stepGate(grid, 46, 5, 0);
+    carve(grid, 45, 14, 47, 16);
+    const portal = setPortal(grid, { x: 57, y: 16 });
+    const stage = finish(config, {
+      width: width, height: height, grid: grid,
+      coins: [{ x: 17, y: 16 }, { x: 55, y: 16 }],
+      blocks: [{ x: 22, y: 16, gravity: 0 }],
+      playerStart: { x: 3, y: 15, gravity: 0 },
+      puzzle: { gates: [gate], portal: portal, features: ['tutorial'] }
+    });
+    stage.isTutorial = true;
+    return stage;
+  }
+
   function dropStage(config) {
     const width = 30;
     const height = 92;
@@ -314,6 +335,7 @@ var G = globalThis.G;
   }
 
   const BUILDERS = {
+    tutorial: tutorialStage,
     platform: platformStage,
     drop: dropStage,
     maze: mazeStage,
