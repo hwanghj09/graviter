@@ -11,7 +11,8 @@ const KEYS = {
   clearedStages: STORAGE_PREFIX + 'clearedStages',
   keybinds: STORAGE_PREFIX + 'keybinds',
   keybindsMigratedToArrowDefaults: STORAGE_PREFIX + 'keybindsMigratedToArrowDefaults',
-  soundVolume: STORAGE_PREFIX + 'soundVolume'
+  soundVolume: STORAGE_PREFIX + 'soundVolume',
+  categoryVolumes: STORAGE_PREFIX + 'categoryVolumes'
 };
 
 const DEFAULT_KEYBINDS = {
@@ -20,10 +21,20 @@ const DEFAULT_KEYBINDS = {
   jump: 'ArrowUp',
   crouch: 'ArrowDown',
   rotate: 'KeyZ',
-  grab: 'ShiftLeft'
+  grab: 'KeyX'
 };
 
 const DEFAULT_SOUND_VOLUME = 0.5;
+
+// Per-category multipliers applied on top of the master soundVolume above —
+// music (background loop), effects (coin/stage clear/ending), interaction
+// (UI clicks, blocked-action cue). Each defaults to full so a fresh save
+// sounds identical to before these existed.
+const DEFAULT_CATEGORY_VOLUMES = {
+  music: 1,
+  effects: 1,
+  interaction: 1
+};
 
 function getLocalStorage() {
   try {
@@ -127,16 +138,42 @@ function setSoundVolume(vol) {
   return clamped;
 }
 
+function clampVolume(vol, fallback) {
+  const num = typeof vol === 'number' ? vol : parseFloat(vol);
+  return isNaN(num) ? fallback : Math.min(1, Math.max(0, num));
+}
+
+function getCategoryVolumes() {
+  const val = readKey(KEYS.categoryVolumes, null);
+  const source = (val && typeof val === 'object') ? val : {};
+  const merged = {};
+  Object.keys(DEFAULT_CATEGORY_VOLUMES).forEach(function (key) {
+    merged[key] = clampVolume(source[key], DEFAULT_CATEGORY_VOLUMES[key]);
+  });
+  return merged;
+}
+
+function setCategoryVolume(category, vol) {
+  const current = getCategoryVolumes();
+  if (!(category in DEFAULT_CATEGORY_VOLUMES)) return current;
+  current[category] = clampVolume(vol, DEFAULT_CATEGORY_VOLUMES[category]);
+  writeKey(KEYS.categoryVolumes, current);
+  return current;
+}
+
 G.Storage = {
   DEFAULT_KEYBINDS: DEFAULT_KEYBINDS,
   DEFAULT_SOUND_VOLUME: DEFAULT_SOUND_VOLUME,
+  DEFAULT_CATEGORY_VOLUMES: DEFAULT_CATEGORY_VOLUMES,
   getClearedStages: getClearedStages,
   setClearedStages: setClearedStages,
   addClearedStage: addClearedStage,
   getKeybinds: getKeybinds,
   setKeybinds: setKeybinds,
   getSoundVolume: getSoundVolume,
-  setSoundVolume: setSoundVolume
+  setSoundVolume: setSoundVolume,
+  getCategoryVolumes: getCategoryVolumes,
+  setCategoryVolume: setCategoryVolume
 };
 
 if (typeof module !== 'undefined' && module.exports) {

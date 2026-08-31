@@ -22,7 +22,7 @@ const justPressedCodes = Object.create(null);
 
 let keybinds = (G.Storage ? G.Storage.getKeybinds() : null) || {
   left: 'ArrowLeft', right: 'ArrowRight', jump: 'ArrowUp', crouch: 'ArrowDown',
-  rotate: 'KeyZ', grab: 'ShiftLeft'
+  rotate: 'KeyZ', grab: 'KeyX'
 };
 
 function codesForAction(action) {

@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Graviter 맵 에디터</title>
+<link rel="stylesheet" href="css/map-editor.css">
+</head>
+<body>
+
+<header id="editor-header">
+  <h1>Graviter 맵 에디터</h1>
+  <div class="field-row">
+    <label>스테이지 ID <input type="number" id="stage-id" min="1" value="8"></label>
+    <label>가로(칸) <input type="number" id="grid-width" min="3" max="150" value="20"></label>
+    <label>세로(칸) <input type="number" id="grid-height" min="3" max="80" value="12"></label>
+    <button id="btn-resize" type="button">크기 적용</button>
+    <button id="btn-clear" type="button">전체 벽으로 초기화</button>
+    <button id="btn-random-maze" type="button">랜덤 미로 생성</button>
+    <button id="btn-undo" type="button" title="Ctrl+Z">되돌리기</button>
+    <button id="btn-redo" type="button" title="Ctrl+Shift+Z">다시하기</button>
+    <span class="zoom-control">
+      확대/축소
+      <button id="btn-zoom-out" type="button" title="- 또는 Ctrl+-">－</button>
+      <span id="zoom-label">18px</span>
+      <button id="btn-zoom-in" type="button" title="+ 또는 Ctrl++">＋</button>
+    </span>
+  </div>
+  <p class="hint">
+    단축키: Ctrl+Z 되돌리기 · Ctrl+Shift+Z 다시하기 · Ctrl+S .js 다운로드 ·
+    1~6 도구 전환 · 방향키 중력 전환 · +/－ 확대·축소 (입력창에 포커스 중일 땐 비활성)
+  </p>
+</header>
+
+<main id="editor-main">
+  <section id="toolbar">
+    <h2>도구</h2>
+    <div class="tool-group" id="tool-buttons">
+      <button type="button" class="tool-btn" data-tool="wall">벽 (검정)</button>
+      <button type="button" class="tool-btn" data-tool="empty">빈 공간 (지우개)</button>
+      <button type="button" class="tool-btn" data-tool="portal">포탈 (파랑)</button>
+      <button type="button" class="tool-btn" data-tool="coin">코인 (토글)</button>
+      <button type="button" class="tool-btn" data-tool="block">블럭 (토글)</button>
+      <button type="button" class="tool-btn" data-tool="player">플레이어 시작 지점</button>
+    </div>
+
+    <h3>중력 방향 <span class="hint">(블럭/시작 지점 배치 시 적용)</span></h3>
+    <div class="tool-group" id="gravity-buttons">
+      <button type="button" class="gravity-btn" data-gravity="0">↓ 아래</button>
+      <button type="button" class="gravity-btn" data-gravity="1">← 왼쪽</button>
+      <button type="button" class="gravity-btn" data-gravity="2">↑ 위</button>
+      <button type="button" class="gravity-btn" data-gravity="3">→ 오른쪽</button>
+    </div>
+
+    <p class="hint">
+      드래그로 칠하기 가능(벽/빈 공간/포탈). 코인·블럭·시작 지점은 클릭할 때마다 켜짐/꺼짐이 토글돼요.
+      블럭은 놓을 때의 중력 방향을 함께 저장해요.
+    </p>
+
+    <h2>상태</h2>
+    <ul id="stats-list"></ul>
+
+    <div id="warnings"></div>
+
+    <button id="btn-check" type="button">연결성 확인 (참고용)</button>
+    <div id="connectivity-result"></div>
+  </section>
+
+  <section id="grid-wrap">
+    <canvas id="editor-canvas"></canvas>
+  </section>
+
+  <section id="io-panel">
+    <h2>내보내기</h2>
+    <div class="field-row">
+      <button id="btn-generate" type="button">코드 생성</button>
+      <button id="btn-download" type="button">.js 파일 다운로드</button>
+      <button id="btn-copy" type="button">클립보드에 복사</button>
+    </div>
+    <textarea id="export-code" spellcheck="false" placeholder="&quot;코드 생성&quot;을 누르면 여기에 stageXX.js 내용이 표시돼요."></textarea>
+
+    <h2>불러오기</h2>
+    <p class="hint">기존 stageXX.js 파일 내용을 통째로 붙여넣고 불러오면 편집할 수 있어요.</p>
+    <textarea id="import-code" spellcheck="false" placeholder="여기에 stageXX.js 파일 내용을 붙여넣으세요."></textarea>
+    <button id="btn-import" type="button">불러오기</button>
+    <div id="import-result"></div>
+  </section>
+</main>
+
+<script src="js/editor/mapEditor.js"></script>
+</body>
+</html>

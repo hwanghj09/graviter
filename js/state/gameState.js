@@ -13,6 +13,8 @@ const SCREENS = {
   MAIN_MENU: 'MAIN_MENU',
   STAGE_SELECT: 'STAGE_SELECT',
   SETTINGS: 'SETTINGS',
+  SETTINGS_CONTROLS: 'SETTINGS_CONTROLS',
+  SETTINGS_SOUND: 'SETTINGS_SOUND',
   PAUSE: 'PAUSE',
   PLAYING: 'PLAYING',
   STAGE_CLEAR: 'STAGE_CLEAR',
@@ -23,9 +25,20 @@ const SCREEN_ELEMENT_IDS = {
   MAIN_MENU: 'main-menu',
   STAGE_SELECT: 'stage-select',
   SETTINGS: 'settings',
+  SETTINGS_CONTROLS: 'settings-controls',
+  SETTINGS_SOUND: 'settings-sound',
   PAUSE: 'pause-menu',
   STAGE_CLEAR: 'stage-clear',
   ENDING: 'ending'
+};
+
+// The settings hub and its two sub-screens all count as "still in settings"
+// for the purposes of _settingsReturnTo below — navigating between them must
+// not overwrite which non-settings screen SETTINGS should eventually exit to.
+const SETTINGS_FAMILY_SCREENS = {
+  SETTINGS: true,
+  SETTINGS_CONTROLS: true,
+  SETTINGS_SOUND: true
 };
 
 // Screens during which the gameplay canvas stays visible behind (or as) the
@@ -62,7 +75,7 @@ function applyDom(screen) {
 function goTo(screen) {
   if (!SCREENS[screen]) return;
 
-  if (screen === SCREENS.SETTINGS && _current !== SCREENS.SETTINGS) {
+  if (screen === SCREENS.SETTINGS && !SETTINGS_FAMILY_SCREENS[_current]) {
     _settingsReturnTo = _current || SCREENS.MAIN_MENU;
   }
 
@@ -79,14 +92,23 @@ function goTo(screen) {
   _current = screen;
   applyDom(screen);
 
+  // In-game screens (playing, paused, stage clear) get the driving 'game'
+  // music loop; every other (menu-like) screen gets the gentle 'menu' loop.
+  if (G.Audio && typeof G.Audio.setMusicTheme === 'function') {
+    G.Audio.setMusicTheme(CANVAS_VISIBLE_SCREENS[screen] ? 'game' : 'menu');
+  }
+
   // Optional per-screen refresh hooks — kept as loose lookups (rather than
   // a hard dependency) so gameState.js does not need to know the UI
   // modules exist yet at load time.
   if (screen === SCREENS.STAGE_SELECT && G.StageSelect && typeof G.StageSelect.render === 'function') {
     G.StageSelect.render();
   }
-  if (screen === SCREENS.SETTINGS && G.SettingsMenu && typeof G.SettingsMenu.render === 'function') {
-    G.SettingsMenu.render();
+  if (screen === SCREENS.SETTINGS_CONTROLS && G.SettingsMenu && typeof G.SettingsMenu.renderControls === 'function') {
+    G.SettingsMenu.renderControls();
+  }
+  if (screen === SCREENS.SETTINGS_SOUND && G.SettingsMenu && typeof G.SettingsMenu.renderSound === 'function') {
+    G.SettingsMenu.renderSound();
   }
 }
 

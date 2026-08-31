@@ -314,10 +314,12 @@ function update(dt, world) {
       player.grounded = isGrounded(
         player.getAABB(), gVec, stageGrid, width, height, blocks, heldBlock
       );
+    } else if (G.Audio) {
+      G.Audio.playActionBlocked();
     }
   }
 
-  // 4. grab / drop (SHIFT) — one-shot
+  // 4. grab / drop (X) — one-shot
   if (Input.consumePressed('grab')) {
     if (player.holdingBlock) {
       if (dropBlock(player, player.holdingBlock, stageGrid, width, height, blocks)) {
@@ -330,6 +332,8 @@ function update(dt, world) {
         found.vx = 0;
         found.vy = 0;
         player.holdingBlock = found;
+      } else if (G.Audio) {
+        G.Audio.playActionBlocked();
       }
     }
   }

@@ -13,6 +13,7 @@
 
 <!-- UI_SCREENS_START -->
 <div id="main-menu" class="screen">
+  <canvas id="menu-bg-canvas"></canvas>
   <div class="screen-panel main-menu-panel">
     <h1>Graviter</h1>
     <button id="btn-start" type="button">시작하기</button>
@@ -24,6 +25,11 @@
   <div class="screen-panel stage-select-panel">
     <h2>스테이지 선택</h2>
     <div id="stage-grid" class="stage-grid"></div>
+    <nav id="stage-pagination" class="stage-pagination" aria-label="스테이지 페이지" hidden>
+      <button id="stage-page-prev" type="button">이전</button>
+      <span id="stage-page-label" class="stage-page-label" aria-live="polite"></span>
+      <button id="stage-page-next" type="button">다음</button>
+    </nav>
     <div class="stage-select-actions">
       <button id="stage-select-back" type="button">뒤로</button>
     </div>
@@ -33,19 +39,38 @@
 <div id="settings" class="screen">
   <div class="screen-panel settings-panel">
     <h2>설정</h2>
+    <button id="settings-open-controls" type="button">조작 설정</button>
+    <button id="settings-open-sound" type="button">사운드 설정</button>
+    <button id="settings-back" type="button">뒤로</button>
+  </div>
+</div>
+
+<div id="settings-controls" class="screen">
+  <div class="screen-panel settings-panel">
+    <h2>조작 설정</h2>
     <div class="settings-section">
-      <h3>조작키</h3>
       <div class="keybind-row"><span>왼쪽</span><button id="keybind-left" class="keybind-btn" type="button" data-action="left" aria-label="왼쪽 이동 키 변경"></button></div>
       <div class="keybind-row"><span>오른쪽</span><button id="keybind-right" class="keybind-btn" type="button" data-action="right" aria-label="오른쪽 이동 키 변경"></button></div>
       <div class="keybind-row"><span>점프</span><button id="keybind-jump" class="keybind-btn" type="button" data-action="jump" aria-label="점프 키 변경"></button></div>
       <div class="keybind-row"><span>웅크리기</span><button id="keybind-crouch" class="keybind-btn" type="button" data-action="crouch" aria-label="웅크리기 키 변경"></button></div>
+      <div class="keybind-row"><span>중력 회전</span><button id="keybind-rotate" class="keybind-btn" type="button" data-action="rotate" aria-label="중력 회전 키 변경"></button></div>
+      <div class="keybind-row"><span>블럭 잡기</span><button id="keybind-grab" class="keybind-btn" type="button" data-action="grab" aria-label="블럭 잡기 키 변경"></button></div>
       <div id="keybind-warning" class="keybind-warning" role="alert" hidden></div>
     </div>
+    <button id="settings-controls-back" type="button">뒤로</button>
+  </div>
+</div>
+
+<div id="settings-sound" class="screen">
+  <div class="screen-panel settings-panel">
+    <h2>사운드 설정</h2>
     <div class="settings-section">
-      <h3>사운드</h3>
-      <input type="range" id="volume-slider" min="0" max="1" step="0.01" aria-label="사운드 볼륨">
+      <div class="volume-row"><span>마스터</span><input type="range" class="volume-slider" id="volume-master" min="0" max="1" step="0.01" aria-label="마스터 볼륨"></div>
+      <div class="volume-row"><span>배경음악</span><input type="range" class="volume-slider" id="volume-music" min="0" max="1" step="0.01" aria-label="배경음악 볼륨"></div>
+      <div class="volume-row"><span>효과음</span><input type="range" class="volume-slider" id="volume-effects" min="0" max="1" step="0.01" aria-label="효과음 볼륨"></div>
+      <div class="volume-row"><span>상호작용</span><input type="range" class="volume-slider" id="volume-interaction" min="0" max="1" step="0.01" aria-label="상호작용 사운드 볼륨"></div>
     </div>
-    <button id="settings-back" type="button">뒤로</button>
+    <button id="settings-sound-back" type="button">뒤로</button>
   </div>
 </div>
 
@@ -87,6 +112,7 @@
 <script src="js/state/gameState.js"></script>
 
 <!-- STAGE_SCRIPTS_START -->
+<script src="js/stages/puzzleStage.js"></script>
 <script src="js/stages/stage01.js"></script>
 <script src="js/stages/stage02.js"></script>
 <script src="js/stages/stage03.js"></script>
@@ -94,9 +120,13 @@
 <script src="js/stages/stage05.js"></script>
 <script src="js/stages/stage06.js"></script>
 <script src="js/stages/stage07.js"></script>
+<script src="js/stages/stage08.js"></script>
+<script src="js/stages/stage09.js"></script>
+<script src="js/stages/stage10.js"></script>
 <!-- STAGE_SCRIPTS_END -->
 
 <!-- UI_SCRIPTS_START -->
+<script src="js/ui/menuBackground.js"></script>
 <script src="js/ui/mainMenu.js"></script>
 <script src="js/ui/stageSelect.js"></script>
 <script src="js/ui/settingsMenu.js"></script>

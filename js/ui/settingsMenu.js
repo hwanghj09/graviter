@@ -1,14 +1,57 @@
 globalThis.G = globalThis.G || {};
 var G = globalThis.G;
 
-// 설정 화면: 조작키 재설정 버튼 (left/right/jump/crouch) + 사운드 슬라이더.
-// 재설정 버튼을 클릭하면 다음 키 입력을 기다렸다가 G.Input.setKeybind로
-// 반영(및 영속화)함. 슬라이더는 G.Storage의 soundVolume에 바로 반영/저장.
+// 설정 화면: SETTINGS(허브) → SETTINGS_CONTROLS(조작 설정) / SETTINGS_SOUND(사운드
+// 설정) 두 하위 화면으로 분리되어 있음(화면 전환은 gameState.js가 담당).
+// - 조작 설정: 재설정 버튼(left/right/jump/crouch/rotate/grab)을 클릭하면 다음
+//   키 입력을 기다렸다가 G.Input.setKeybind로 반영(및 영속화)함.
+// - 사운드 설정: 마스터 슬라이더(soundVolume) + 카테고리별 슬라이더
+//   (categoryVolumes: music/effects/interaction)로 나뉘며, 각각 G.Storage에 바로
+//   반영/저장되고 G.Audio의 해당 게인 노드에도 즉시 반영됨.
 
-const ACTIONS = ['left', 'right', 'jump', 'crouch'];
-// Labels cover every action that can appear in a keybinds object (including
-// the non-rebindable rotate/grab) so a conflict against one of those still
-// reads as a real action name instead of a raw key code.
+// Maps each volume slider's element id to how it reads/writes G.Storage and
+// applies to G.Audio's gain graph. 'master' is the top-level soundVolume;
+// the rest are per-category multipliers under it.
+const VOLUME_SLIDERS = [
+  {
+    id: 'volume-master',
+    get: function () { return G.Storage ? G.Storage.getSoundVolume() : 0.5; },
+    set: function (vol) {
+      if (G.Storage) G.Storage.setSoundVolume(vol);
+      if (G.Audio && typeof G.Audio.setMasterVolume === 'function') G.Audio.setMasterVolume(vol);
+    }
+  },
+  {
+    id: 'volume-music',
+    category: 'music'
+  },
+  {
+    id: 'volume-effects',
+    category: 'effects'
+  },
+  {
+    id: 'volume-interaction',
+    category: 'interaction'
+  }
+].map(function (entry) {
+  if (!entry.category) return entry;
+  const category = entry.category;
+  return {
+    id: entry.id,
+    get: function () {
+      const vols = G.Storage ? G.Storage.getCategoryVolumes() : {};
+      return (category in vols) ? vols[category] : 1;
+    },
+    set: function (vol) {
+      if (G.Storage) G.Storage.setCategoryVolume(category, vol);
+      if (G.Audio && typeof G.Audio.setCategoryVolume === 'function') G.Audio.setCategoryVolume(category, vol);
+    }
+  };
+});
+
+const ACTIONS = ['left', 'right', 'jump', 'crouch', 'rotate', 'grab'];
+// Labels cover every action that can appear in a keybinds object, used for
+// both the button rows and readable names in conflict messages.
 const ACTION_LABELS = {
   left: '왼쪽', right: '오른쪽', jump: '점프', crouch: '웅크리기',
   rotate: '중력 회전', grab: '블럭 잡기'
@@ -98,11 +141,13 @@ function refreshKeybindLabels() {
   refreshConflictWarning(conflicts);
 }
 
-function refreshVolumeSlider() {
+function refreshVolumeSliders() {
   if (typeof document === 'undefined' || !document.getElementById) return;
-  const slider = document.getElementById('volume-slider');
-  if (!slider) return;
-  slider.value = String(G.Storage ? G.Storage.getSoundVolume() : 0.5);
+  VOLUME_SLIDERS.forEach(function (entry) {
+    const slider = document.getElementById(entry.id);
+    if (!slider) return;
+    slider.value = String(entry.get());
+  });
 }
 
 function beginRebind(action) {
@@ -163,30 +208,61 @@ function bindSettingsMenu() {
 
   document.addEventListener('keydown', handleRebindKeydown);
 
-  const slider = document.getElementById('volume-slider');
-  if (slider) {
+  VOLUME_SLIDERS.forEach(function (entry) {
+    const slider = document.getElementById(entry.id);
+    if (!slider) return;
     slider.addEventListener('input', function () {
-      const vol = parseFloat(slider.value);
-      if (G.Storage) G.Storage.setSoundVolume(vol);
-      if (G.Audio && typeof G.Audio.setVolume === 'function') G.Audio.setVolume(vol);
+      entry.set(parseFloat(slider.value));
+    });
+  });
+
+  const openControlsBtn = document.getElementById('settings-open-controls');
+  if (openControlsBtn) {
+    openControlsBtn.addEventListener('click', function () {
+      G.State.goTo(G.State.SCREENS.SETTINGS_CONTROLS);
+    });
+  }
+
+  const openSoundBtn = document.getElementById('settings-open-sound');
+  if (openSoundBtn) {
+    openSoundBtn.addEventListener('click', function () {
+      G.State.goTo(G.State.SCREENS.SETTINGS_SOUND);
     });
   }
 
   const backBtn = document.getElementById('settings-back');
   if (backBtn) {
     backBtn.addEventListener('click', function () {
-      _awaiting = null;
       G.State.exitSettings();
+    });
+  }
+
+  const controlsBackBtn = document.getElementById('settings-controls-back');
+  if (controlsBackBtn) {
+    controlsBackBtn.addEventListener('click', function () {
+      _awaiting = null;
+      G.State.goTo(G.State.SCREENS.SETTINGS);
+    });
+  }
+
+  const soundBackBtn = document.getElementById('settings-sound-back');
+  if (soundBackBtn) {
+    soundBackBtn.addEventListener('click', function () {
+      G.State.goTo(G.State.SCREENS.SETTINGS);
     });
   }
 }
 
-// Called by gameState.js each time the SETTINGS screen becomes active, so
-// the displayed labels/slider always reflect current storage.
-function render() {
+// Called by gameState.js each time SETTINGS_CONTROLS / SETTINGS_SOUND
+// becomes active, so the displayed labels/sliders always reflect current
+// storage.
+function renderControls() {
   _awaiting = null;
   refreshKeybindLabels();
-  refreshVolumeSlider();
+}
+
+function renderSound() {
+  refreshVolumeSliders();
 }
 
 if (typeof document !== 'undefined') {
@@ -197,7 +273,7 @@ if (typeof document !== 'undefined') {
   }
 }
 
-G.SettingsMenu = { bind: bindSettingsMenu, render: render };
+G.SettingsMenu = { bind: bindSettingsMenu, renderControls: renderControls, renderSound: renderSound };
 
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = G.SettingsMenu;

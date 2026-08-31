@@ -33,9 +33,10 @@ if (PLAYER_HOLDING_SPRITE) PLAYER_HOLDING_SPRITE.src = 'assets/sprites/player-ho
 const VISUAL_SCALE = 0.9;
 
 // Walk frames advance by distance traveled, so cadence follows actual speed.
-const STRIDE_LENGTH = 80; // px of travel per full walk cycle
+const STRIDE_LENGTH = 120; // px of travel per full walk cycle
 const WALK_AMPLITUDE = 0.7; // fraction of legSpan/armSpan at full swing
 const WALK_MIN_SPEED = 5; // px/s below which the player reads as standing still
+const WALK_FRAMES = [0, 2, 0, 3];
 let _walkPhase = 0;
 let _idlePhase = 0;
 let _coinFloatPhase = 0;
@@ -72,6 +73,21 @@ function drawBlocks(ctx, world) {
     const aabb = b.getAABB();
     ctx.fillStyle = BLOCK_COLOR;
     ctx.fillRect(aabb.x, aabb.y, aabb.w, aabb.h);
+    const gravity = G.Gravity.getGravityVec(b.gravityIndex);
+    const cx = b.px;
+    const cy = b.py;
+    const length = G.Grid.TILE_SIZE * 0.24;
+    const tipX = cx + gravity.x * length;
+    const tipY = cy + gravity.y * length;
+    ctx.strokeStyle = '#7cddff';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(cx - gravity.x * length, cy - gravity.y * length);
+    ctx.lineTo(tipX, tipY);
+    ctx.lineTo(tipX - gravity.x * 6 + gravity.y * 6, tipY - gravity.y * 6 - gravity.x * 6);
+    ctx.moveTo(tipX, tipY);
+    ctx.lineTo(tipX - gravity.x * 6 - gravity.y * 6, tipY - gravity.y * 6 + gravity.x * 6);
+    ctx.stroke();
     if (b.heldBy) {
       ctx.strokeStyle = BLOCK_HELD_OUTLINE;
       ctx.lineWidth = 3;
@@ -146,7 +162,7 @@ function animationFor(player, dt) {
   _walkPhase += (moveSpeed / STRIDE_LENGTH) * dt;
   _walkPhase -= Math.floor(_walkPhase);
   const offset = Math.sin(_walkPhase * Math.PI * 2) * WALK_AMPLITUDE;
-  return { name: name, frame: _walkPhase < 0.5 ? 2 : 3, bob: Math.abs(offset) * 2 };
+  return { name: name, frame: WALK_FRAMES[Math.floor(_walkPhase * WALK_FRAMES.length)], bob: Math.abs(offset) * 2 };
 }
 
 function drawPlayer(ctx, world, camera, dt) {
@@ -174,6 +190,64 @@ function drawPlayer(ctx, world, camera, dt) {
   ctx.restore();
 }
 
+// Coin-count HUD, top-right corner. Drawn in plain screen space (after the
+// camera transform is restored) so it stays fixed in the corner and never
+// rotates with gravity.
+function drawCoinHud(ctx, world, canvasW) {
+  const coins = world.coins || [];
+  if (coins.length === 0) return;
+
+  let collected = 0;
+  for (let i = 0; i < coins.length; i++) {
+    if (coins[i].collected) collected++;
+  }
+  const text = collected + ' / ' + coins.length;
+
+  const iconSize = 28;
+  const marginX = 16;
+  const marginY = 14;
+  const panelPaddingX = 14;
+  const panelPaddingY = 8;
+  const gap = 8;
+
+  ctx.save();
+  ctx.font = 'bold 20px sans-serif';
+  ctx.textBaseline = 'middle';
+  ctx.textAlign = 'left';
+  const textWidth = ctx.measureText(text).width;
+
+  const panelHeight = Math.max(iconSize, 20) + panelPaddingY * 2;
+  const panelWidth = iconSize + gap + textWidth + panelPaddingX * 2;
+  const panelX = canvasW - marginX - panelWidth;
+  const panelY = marginY;
+  const r = 10;
+
+  ctx.fillStyle = 'rgba(10, 10, 12, 0.55)';
+  ctx.beginPath();
+  ctx.moveTo(panelX + r, panelY);
+  ctx.arcTo(panelX + panelWidth, panelY, panelX + panelWidth, panelY + panelHeight, r);
+  ctx.arcTo(panelX + panelWidth, panelY + panelHeight, panelX, panelY + panelHeight, r);
+  ctx.arcTo(panelX, panelY + panelHeight, panelX, panelY, r);
+  ctx.arcTo(panelX, panelY, panelX + panelWidth, panelY, r);
+  ctx.closePath();
+  ctx.fill();
+
+  const iconX = panelX + panelPaddingX;
+  const iconY = panelY + panelHeight / 2 - iconSize / 2;
+  if (COIN_SPRITE && COIN_SPRITE.complete && COIN_SPRITE.naturalWidth) {
+    ctx.drawImage(COIN_SPRITE, iconX, iconY, iconSize, iconSize);
+  } else {
+    ctx.fillStyle = COIN_COLOR;
+    ctx.beginPath();
+    ctx.arc(iconX + iconSize / 2, iconY + iconSize / 2, iconSize * 0.42, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  ctx.fillStyle = '#ffffff';
+  ctx.fillText(text, iconX + iconSize + gap, panelY + panelHeight / 2 + 1);
+  ctx.restore();
+}
+
 function draw(ctx, world, camera, dt) {
   const canvas = ctx.canvas;
   const w = canvas ? canvas.width : 0;
@@ -194,6 +268,8 @@ function draw(ctx, world, camera, dt) {
   drawPlayer(ctx, world, camera, dt);
 
   ctx.restore();
+
+  drawCoinHud(ctx, world, w);
 }
 
 G.Renderer = {
